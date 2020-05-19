@@ -6,3 +6,6 @@ target/
 
 # Private settings.
 settings.xml
+.project
+.classpath
+.settings
