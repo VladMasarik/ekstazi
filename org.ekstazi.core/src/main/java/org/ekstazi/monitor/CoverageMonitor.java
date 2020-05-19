@@ -17,6 +17,9 @@
 package org.ekstazi.monitor;
 
 import java.io.File;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -33,7 +36,9 @@ import org.ekstazi.Config;
 import org.ekstazi.Names;
 import org.ekstazi.log.Log;
 import org.ekstazi.research.Research;
+import org.openjdk.jmh.annotations.Benchmark;
 import org.ekstazi.util.Types;
+
 
 /**
  * Monitor notified in runtime of various dependencies.
@@ -187,10 +192,30 @@ public final class CoverageMonitor {
      * {@link Semaphore} is (slightly) faster but it may be too much for the
      * moment.
      */
-    public static void t(Class<?> clz) {
+    public static void t(Class<?> clz) {  // notes that a class was used
         // Must be non null and type of interest.
-        if (clz == null || ClassesCache.check(clz) || Types.isIgnorable(clz)) {
+        if (clz == null || ClassesCache.check(clz) || Types.isIgnorable(clz)) { // Valid ignoring
             return;
+        }
+
+        Method[] methods = clz.getDeclaredMethods();
+        for (Method method : methods) {
+            Annotation benchAnnotation = method.getAnnotation(Benchmark.class);
+            if (benchAnnotation instanceof Benchmark) {
+                try {
+                    Object[] arrayOfNulls = new Object[method.getParameterTypes().length];
+
+                    for(int i=0;i<arrayOfNulls.length;i++)
+                    {
+                        arrayOfNulls[i] = null;
+                    }
+                    method.invoke(clz.newInstance(), arrayOfNulls); //null because the method is static
+                    
+                } catch (Exception e) {
+                    System.err.println(e.toString());
+                    e.printStackTrace();                    
+                }
+            }
         }
 
         // Check and assign id to this class (this must be synchronized).
@@ -217,7 +242,7 @@ public final class CoverageMonitor {
         if (url == null) {
             return;
         }
-        recordURL(url.toExternalForm());
+        recordURL(url.toExternalForm()); // Add to URLs
     }
 
     /**
@@ -277,7 +302,7 @@ public final class CoverageMonitor {
      * @param f
      *            File to record as a dependency
      */
-    public static void addFileURL(File f) {
+    public static void addFileURL(File f) { // DOES NOT SEEM TO BE use
         String absolutePath = f.getAbsolutePath();
         if (!filterFile(absolutePath)) {
             try {
@@ -296,18 +321,17 @@ public final class CoverageMonitor {
      * 
      * @param externalForm
      */
-    protected static void recordURL(String externalForm) {
+    protected static void recordURL(String externalForm) { // used by touch method
         if (filterURL(externalForm)) {
             return;
         }
-
         if (isWellKnownUrl(externalForm)) {
             // Ignore JUnit classes if specified in configuration.
             if (Config.DEPENDENCIES_INCLUDE_WELLKNOWN_V) {
-                safeRecordURL(externalForm);
+                safeRecordURL(externalForm); // ad to URLS //TODO add LOGs
             }
         } else {
-            safeRecordURL(externalForm);
+            safeRecordURL(externalForm); //TODO add LOGs
         }
     }
 
@@ -316,7 +340,7 @@ public final class CoverageMonitor {
      * 
      * @param externalForm
      */
-    private static void safeRecordURL(String externalForm) {
+    private static void safeRecordURL(String externalForm) { // add to URLs
         try {
             sLock.lock();
             sURLs.add(externalForm);
