@@ -6,7 +6,7 @@
   <parent>
     <groupId>org.ekstazi</groupId>
     <artifactId>org.ekstazi.parent</artifactId>
-    <version>5.3.0</version> <!-- EkstaziVersion -->
+    <version>5.4.0</version> <!-- EkstaziVersion -->
   </parent>
 
   <artifactId>org.ekstazi.core.test</artifactId>
@@ -23,7 +23,7 @@
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>org.ekstazi.core</artifactId>
-      <version>${project.version}</version>
+      <version>5.4.0</version>
     </dependency>
   </dependencies>
 
@@ -58,7 +58,7 @@
               <goal>test</goal>
             </goals>
             <configuration>
-              <skip>false</skip>
+              <skip>true</skip>
             </configuration>
           </execution>
         </executions>

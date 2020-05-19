@@ -6,14 +6,27 @@
   <parent>
     <groupId>org.ekstazi</groupId>
     <artifactId>org.ekstazi.parent</artifactId>
-    <version>5.3.0</version> <!-- EkstaziVersion -->
+    <version>5.4.0</version> <!-- EkstaziVersion -->
   </parent>
 
   <artifactId>org.ekstazi.core</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <url>www.ekstazi.org</url>
   <description>Ekstazi: Regression testing tool for Java - core project</description>
-  
+
+  <dependencies>
+    <dependency>
+        <groupId>org.openjdk.jmh</groupId>
+        <artifactId>jmh-core</artifactId>
+        <version>1.23</version>
+    </dependency>
+    <dependency>
+        <groupId>org.openjdk.jmh</groupId>
+        <artifactId>jmh-generator-annprocess</artifactId>
+        <version>1.23</version>
+    </dependency>
+  </dependencies>
+
   <build>
     <plugins>
       <plugin>
@@ -25,6 +38,12 @@
             <manifestFile>META-INF/MANIFEST.MF</manifestFile>
             <addMavenDescriptor>false</addMavenDescriptor>
           </archive>
+          <debug>true</debug>
+          <debuglevel>lines,vars,source</debuglevel>  <!-- DEBUGGING INFO before 'none' but I filled it up-->
+          <source>1.6</source>
+          <target>1.6</target>
+
+          
         </configuration>
       </plugin>
     </plugins>
