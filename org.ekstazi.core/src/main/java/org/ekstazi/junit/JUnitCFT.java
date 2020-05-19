@@ -37,7 +37,7 @@ public class JUnitCFT implements ClassFileTransformer {
     private static class JUnitClassVisitor extends ClassVisitor {
         private final String mClassName;
         
-        public JUnitClassVisitor(String className, ClassVisitor cv) {
+        public JUnitClassVisitor(String className, ClassVisitor cv) { // cv is classWriter object
             super(Instr.ASM_API_VERSION, cv);
             this.mClassName = className;
         }
@@ -64,7 +64,8 @@ public class JUnitCFT implements ClassFileTransformer {
             // TODO: Check the owner.
             if (opcode == Opcodes.INVOKEVIRTUAL && name.equals(JUnitNames.RUNNER_FOR_CLASS_METHOD)
                     && desc.equals("(Ljava/lang/Class;)Lorg/junit/runner/Runner;")) {
-                mv.visitMethodInsn(Opcodes.INVOKESTATIC,
+                        
+                mv.visitMethodInsn(Opcodes.INVOKESTATIC, //invoke JUNIT 4 runner
                     JUnitNames.JUNIT4_MONITOR_VM,
                     JUnitNames.RUNNER_FOR_CLASS_METHOD,
                     "(L" + JUnitNames.RUNNER_BUILDER_VM + ";Ljava/lang/Class;)Lorg/junit/runner/Runner;",
@@ -118,14 +119,21 @@ public class JUnitCFT implements ClassFileTransformer {
         if (className.startsWith("org/apache/tools/ant") ||
                 className.startsWith("org/apache/maven") ||
                 className.startsWith("org/junit/")) {
+
             ClassReader classReader = new ClassReader(classfileBuffer);
+            System.err.println("transform JUNIT CV; class:");
+            System.err.println(className);
             ClassWriter classWriter = new ClassWriter(classReader,
             /* ClassWriter.COMPUTE_FRAMES | */ClassWriter.COMPUTE_MAXS);
             JUnitClassVisitor visitor = new JUnitClassVisitor(className, classWriter);
             classReader.accept(visitor, 0);
             return classWriter.toByteArray();
+
         } else if (className.equals("junit/framework/TestSuite")) {
+
             ClassReader classReader = new ClassReader(classfileBuffer);
+            System.err.println("transform test suite CV; class:");
+            System.err.println(className);
             ClassWriter classWriter = new ClassWriter(classReader,
             ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
             TestSuiteClassVisitor visitor = new TestSuiteClassVisitor(classWriter);

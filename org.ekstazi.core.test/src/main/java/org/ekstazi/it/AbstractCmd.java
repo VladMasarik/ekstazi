@@ -19,11 +19,14 @@ package org.ekstazi.it;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.List;
 
 import org.ekstazi.util.FileUtil;
 
 public abstract class AbstractCmd {
-    
+
     /** Current working directory */
     private final File mCwd;
 
@@ -60,6 +63,9 @@ public abstract class AbstractCmd {
             // Wait for the process to be done.
             p.waitFor();
             mExitCode = p.exitValue();
+            // Turn On if you want to see a debug
+            System.out.println("Execution ended with output:");
+            System.out.println(String.join("\n", mOutput ));
         } catch (Exception ex) {
             mException = ex;
         }

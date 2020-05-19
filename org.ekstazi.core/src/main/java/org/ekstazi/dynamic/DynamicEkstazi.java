@@ -58,7 +58,7 @@ public class DynamicEkstazi {
         Log.d("Setting class transformer");
         // Add classfile transformer.
         Class<?> instrumentationFactoryClass = ClassLoader.getSystemClassLoader().loadClass(
-                Names.DYNAMIC_AGENT_BIN);
+                Names.DYNAMIC_AGENT_BIN); //dynamic agent
         Method getInstrumentation = instrumentationFactoryClass.getDeclaredMethod("getInstrumentation");
         getInstrumentation.setAccessible(true);
         Instrumentation instrumentation = (Instrumentation) getInstrumentation.invoke(null);

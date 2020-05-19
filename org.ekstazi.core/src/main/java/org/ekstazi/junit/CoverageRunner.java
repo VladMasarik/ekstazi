@@ -16,8 +16,11 @@
 
 package org.ekstazi.junit;
 
+import java.util.Arrays;
+
 import org.ekstazi.Config;
 import org.ekstazi.Ekstazi;
+import org.ekstazi.log.Log;
 import org.ekstazi.monitor.CoverageMonitor;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.Description;
@@ -61,6 +64,10 @@ public class CoverageRunner extends Runner implements Filterable, Sortable {
         this.mClz = clz;
         this.mWrappedRunner = wrapped;
         this.mURLs = urls;
+
+        Log.d("CoverageRUNNER CONSTRUCTOR URLs");
+        Log.d(Arrays.toString(urls));
+        // Thread.dumpStack();
     }
     
     @Override
@@ -69,13 +76,17 @@ public class CoverageRunner extends Runner implements Filterable, Sortable {
     }
 
     @Override
-    public void run(RunNotifier notifier) {
+    public void run(RunNotifier notifier) { // called by itself OR JUNIT plugin OR testing method
+        // Thread.dumpStack();
         if (isIgnoreAllTests()) {
             return;
         } else if (isRunWithoutCoverage()) {
             mWrappedRunner.run(notifier);
         } else {
-            Ekstazi.inst().beginClassCoverage(mClz.getName());
+            Log.d("EKSTAZI INSTACE REQUEST AND CLASS COVERAGE");
+            // notes that class was tested and what it hash is; does not save hashes
+            Ekstazi.inst().beginClassCoverage(mClz.getName()); // seems that a name of the test class
+            
             JUnit4OutcomeListener outcomeListener = new JUnit4OutcomeListener();
             notifier.addListener(outcomeListener);
             try {
@@ -83,7 +94,7 @@ public class CoverageRunner extends Runner implements Filterable, Sortable {
             } finally {
                 // Include URLs from constructors.
                 if (mURLs != null) CoverageMonitor.addURLs(mURLs);
-                Ekstazi.inst().endClassCoverage(mClz.getName(), outcomeListener.isFailOrError());
+                Ekstazi.inst().endClassCoverage(mClz.getName(), outcomeListener.isFailOrError()); // saves collected hashes / URLs
             }
         }
     }

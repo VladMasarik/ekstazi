@@ -99,6 +99,7 @@ public class StaticSelectEkstaziMojo extends AbstractEkstaziMojo {
     }
 
     public void execute() throws MojoExecutionException {
+        Thread.dumpStack();
         // Check if user explicitly requested to not use Ekstazi in
         // this run.
         if (getSkipme()) {
@@ -132,7 +133,7 @@ public class StaticSelectEkstaziMojo extends AbstractEkstaziMojo {
     }
 
     // INTERNAL
-
+    // STATIC EKSTAZI SELECT!!!
     protected List<String> computeNonAffectedClasses() {
         List<String> nonAffectedClasses = new ArrayList();
         if (!getForceall()) {

@@ -23,7 +23,7 @@ import org.junit.runner.notification.RunNotifier;
 /**
  * Provides support to check if a class is affected.
  */
-class AffectingRunner extends Runner {
+class AffectingRunner extends Runner { //useless
     /** Class being run */
     private final Class<?> mTestClass;
 

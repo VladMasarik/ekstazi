@@ -37,7 +37,7 @@ public class SystemMethodVisitor extends MethodVisitor {
         super(Instr.ASM_API_VERSION, mv);
     }
 
-    @Override
+    @Override // another type of system check
     public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
         if (opcode == Opcodes.INVOKESTATIC && owner.equals(Instr.SYSTEM_CLASS_INTERNAL_NAME)
                 && name.equals(Instr.RUN_FINALIZATION_MNAME) && desc.equals(Instr.RUN_FINALIZATION_MDESC) && !itf) {

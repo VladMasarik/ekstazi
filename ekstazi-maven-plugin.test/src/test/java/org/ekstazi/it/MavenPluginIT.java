@@ -138,7 +138,7 @@ public class MavenPluginIT extends AbstractSurefireIT {
         executeCleanTestStep(testName, 0, 4);
     }
 
-    // Tests Ekstazi lifecycle.
+    // Tests Ekstazi lifecycle. THE MAIN cycle
     @Test
     public void testEkstazilifecycle() throws Exception {
         String testName = "ekstazilifecycle";
@@ -157,6 +157,16 @@ public class MavenPluginIT extends AbstractSurefireIT {
         actualNumOfTests = getNumOfTests(maven.getOutput());
         Assert.assertEquals(0, actualNumOfTests);
     }
+
+    @Test
+    public void testExClean() throws Exception {
+        
+        MavenCmd.Phase[] phases = new MavenCmd.Phase[] { MavenCmd.Phase.EXCLEAN};
+        MavenCmd maven = new MavenCmd(getTestDir("forceall"), phases);
+        maven.execute();
+        Assert.assertTrue(maven.isSuccess());
+    }
+
 
     @Test
     public void testJavacbug() throws Exception {

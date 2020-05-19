@@ -71,7 +71,7 @@ public class CoverageClassVisitor extends ClassVisitor {
         this.mProbeId = sProbeCounter.incrementAndGet();
     }
 
-    @Override
+    @Override // seems to only log a few things
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         // If major version is below 49 make it 49 to be able to use .class.
         // We ignore some classes from xpath, as we get
@@ -91,7 +91,7 @@ public class CoverageClassVisitor extends ClassVisitor {
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
-    @Override
+    @Override // no idea what this class does, but it keeeps cycling between different methods
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         MethodVisitor mv = cv.visitMethod(access, name, desc, signature, exceptions);
         // 0. Ignore Java 1.1. There are some (ASM) problems with UTF Strings.

@@ -33,6 +33,7 @@ import org.ekstazi.Names;
 public class CleanEkstaziMojo extends AbstractEkstaziMojo {
 
     public void execute() throws MojoExecutionException {
+        Thread.dumpStack();
         File dotEkstazi = new File(parentdir, Names.EKSTAZI_ROOT_DIR_NAME);
         if (dotEkstazi.exists()) {
             FileUtil.deleteDirectory(dotEkstazi);

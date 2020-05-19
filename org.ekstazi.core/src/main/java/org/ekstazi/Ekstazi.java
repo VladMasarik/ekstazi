@@ -63,6 +63,7 @@ public final class Ekstazi {
      * Constructor.
      */
     private Ekstazi() {
+        Log.d("Ekstazi Constructor");
         this.mIsEnabled = initAndReportSuccess();
         Log.d("Tool enabled for this run/VM: " + mIsEnabled);
         this.mTestLock = new ReentrantLock();
@@ -76,6 +77,8 @@ public final class Ekstazi {
      */
     public static Ekstazi inst() {
         if (inst != null) return inst;
+        Log.d("CREATING NEW EKSTAZI INSTANCE");
+        Thread.dumpStack();
         synchronized (Ekstazi.class) {
             if (inst == null) {
                 inst = new Ekstazi();
@@ -91,9 +94,11 @@ public final class Ekstazi {
         return mIsEnabled ? mDependencyAnalyzer.isAffected(name) : true;
     }
 
-    public void startCollectingDependencies(String name) {
-        Log.d("Begin collecting dependencies: ", name);
+    public void startCollectingDependencies(String name) { // name = DEFAULT
+        Log.d("Begin collecting dependencies of METHOD: ", name);
+        Log.d("IN IFFFFFF @@@@@@@@@@@@@@@");
         if (mIsEnabled) {
+            Log.d("IN IFFFFFF $$$$$$$$$$");
             mDependencyAnalyzer.beginCoverage(name);
         }
     }
@@ -105,7 +110,7 @@ public final class Ekstazi {
         }
     }
 
-    public boolean isClassAffected(String className) {
+    public boolean isClassAffected(String className) { // return if the class should be tested, and print RUN / SKIP into a class file
         Log.d("Checking if class affected:", className);
         // Check if failing tests should be run or all tests are forced.
         if ((wasFailing(className) && mIsForcefailing) || mIsForceall) {
@@ -114,18 +119,18 @@ public final class Ekstazi {
         return mIsEnabled ? mDependencyAnalyzer.isClassAffected(className) : true;
     }
 
-    public void beginClassCoverage(String className) {
+    public void beginClassCoverage(String className) { // notes that class was tested and what it hash is; does not save hashes
         beginClassCoverage(className, true);
     }
 
-    public void beginClassCoverage(String className, boolean checkGranularity) {
-        Log.d("Begin measuring coverage: ", className);
+    public void beginClassCoverage(String className, boolean checkGranularity) { // notes that class was tested and what it hash is; does not save hashes
+        Log.d("Begin measuring coverage: ", className); // FINISHED HERE!!!
         if (mIsEnabled) {
             mDependencyAnalyzer.beginClassCoverage(className);
         }
     }
     
-    private void endClassCoverage(String className) {
+    private void endClassCoverage(String className) { // save collected hashes / URLs
         Log.d("End measuring coverage: " + className);
         if (mIsEnabled) {
             mDependencyAnalyzer.endClassCoverage(className);
@@ -141,7 +146,8 @@ public final class Ekstazi {
     /**
      * Saves info about the results of running the given test class.
      */
-    public void endClassCoverage(String className, boolean isFailOrError) {
+    public void endClassCoverage(String className, boolean isFailOrError) { // just wrapper around DepAnal.endClass
+        // which just saves the collected hashes / URLs
         File testResultsDir = new File(Config.ROOT_DIR_V, Names.TEST_RESULTS_DIR_NAME);
         File outcomeFile = new File(testResultsDir, className);
         if (isFailOrError) {
@@ -184,7 +190,7 @@ public final class Ekstazi {
 
         // Set the agent at runtime if not already set.
         Instrumentation instrumentation = EkstaziAgent.getInstrumentation();
-        if (instrumentation == null) {
+        if (instrumentation == null) { // hopefully never happens because I have no idea what it does
             Log.d("Agent has not been set previously");
             instrumentation = DynamicEkstazi.initAgentAtRuntimeAndReportSuccess();
             if (instrumentation == null) {

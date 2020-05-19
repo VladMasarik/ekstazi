@@ -38,7 +38,7 @@ import org.ekstazi.util.Types;
  * CONSIDER: Invoke this class without expecting return value. Namely only
  * record class.
  */
-public final class ReflectionMonitor {
+public final class ReflectionMonitor { // useless, just for some corner cases
 
     /**
      * Records that the given class is covered.

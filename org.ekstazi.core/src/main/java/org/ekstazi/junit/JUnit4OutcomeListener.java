@@ -21,8 +21,11 @@ import org.junit.runner.notification.RunListener;
 
 /**
  * Separate from JUnit3 because of class loading.
+ * 
  */
 public class JUnit4OutcomeListener extends RunListener implements OutcomeListener {
+    //Runlistener = override methods to get called when some even happens like testFailure then the that code gets called.
+    // outcome listener is nothing but a interface for the IsXXXX methods
 
     /** Outcome of the execution */
     private Outcome mOutcome = Outcome.PASS;

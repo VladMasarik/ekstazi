@@ -16,19 +16,16 @@
 
 package org.ekstazi.maven;
 
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-
-import org.apache.maven.model.Plugin;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
 import org.ekstazi.Config;
 import org.ekstazi.agent.AgentLoader;
-import org.ekstazi.agent.EkstaziAgent;
 
 /**
  * Implements selection process and integrates with Surefire.  This
@@ -41,6 +38,7 @@ import org.ekstazi.agent.EkstaziAgent;
 public class DynamicSelectEkstaziMojo extends StaticSelectEkstaziMojo {
 
     public void execute() throws MojoExecutionException {
+        Thread.dumpStack();
         if (getSkipme()) {
             getLog().info("Ekstazi is skipped.");
             return;
@@ -53,9 +51,9 @@ public class DynamicSelectEkstaziMojo extends StaticSelectEkstaziMojo {
         checkIfEkstaziDirCanBeCreated();
 
         if (isRestoreGoalPresent()) {
-            super.execute();
+            super.execute(); // Executes only if there is a ekstazi:restore goal mentioned in the POM
         } else {
-            executeThis();
+            executeThis(); // Load agent n stuff
         }
     }
 
@@ -82,9 +80,14 @@ public class DynamicSelectEkstaziMojo extends StaticSelectEkstaziMojo {
         // Try to attach agent that will modify Surefire.
         if (AgentLoader.loadEkstaziAgent()) {
             // Prepare initial list of options and set property.
-            System.setProperty(AbstractMojoInterceptor.ARGLINE_INTERNAL_PROP, prepareEkstaziOptions());
+            String opts = prepareEkstaziOptions();
+            Properties oldOpts = System.getProperties();
+            String stringOpts = System.getProperties().toString();
+            System.err.println(opts);
+            System.setProperty(AbstractMojoInterceptor.ARGLINE_INTERNAL_PROP, opts);
+            oldOpts = System.getProperties();
             // Find non affected classes and set property.
-            List<String> nonAffectedClasses = computeNonAffectedClasses();
+            List<String> nonAffectedClasses = computeNonAffectedClasses(); // called in STATIC select
             System.setProperty(AbstractMojoInterceptor.EXCLUDES_INTERNAL_PROP, Arrays.toString(nonAffectedClasses.toArray(new String[0])));
         } else {
             throw new MojoExecutionException("Ekstazi cannot attach to the JVM, please specify Ekstazi 'restore' explicitly.");

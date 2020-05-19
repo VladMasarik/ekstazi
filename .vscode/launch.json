@@ -1,0 +1,97 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug 5 Remote Second",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 5005
+        },
+        {
+            "type": "java",
+            "name": "Debug 6 remote First",
+            "request": "attach",
+            "hostName": "localhost",
+            "port": 5006
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch) - Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-Config<org.ekstazi.core>",
+            "request": "launch",
+            "mainClass": "org.ekstazi.Config",
+            "projectName": "org.ekstazi.core"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-AgentLoader<org.ekstazi.core>",
+            "request": "launch",
+            "mainClass": "org.ekstazi.agent.AgentLoader",
+            "projectName": "org.ekstazi.core"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-EkstaziCFT<org.ekstazi.core>",
+            "request": "launch",
+            "mainClass": "org.ekstazi.agent.EkstaziCFT",
+            "projectName": "org.ekstazi.core"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-AffectedChecker<org.ekstazi.core>",
+            "request": "launch",
+            "mainClass": "org.ekstazi.check.AffectedChecker",
+            "projectName": "org.ekstazi.core"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-TxtStorer<org.ekstazi.core>",
+            "request": "launch",
+            "mainClass": "org.ekstazi.data.TxtStorer",
+            "projectName": "org.ekstazi.core"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-JarXtractor<org.ekstazi.core>",
+            "request": "launch",
+            "mainClass": "org.ekstazi.dynamic.JarXtractor",
+            "projectName": "org.ekstazi.core"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-BytecodeCleaner<org.ekstazi.core>",
+            "request": "launch",
+            "mainClass": "org.ekstazi.hash.BytecodeCleaner",
+            "projectName": "org.ekstazi.core"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-Hasher<org.ekstazi.core>",
+            "request": "launch",
+            "mainClass": "org.ekstazi.hash.Hasher",
+            "projectName": "org.ekstazi.core"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-ClassesCache<org.ekstazi.core>",
+            "request": "launch",
+            "mainClass": "org.ekstazi.monitor.ClassesCache",
+            "projectName": "org.ekstazi.core"
+        },
+        {
+            "type": "java",
+            "name": "Debug (Launch)-Application",
+            "request": "launch",
+            "mainClass": "org.Application"
+        }
+    ]
+}

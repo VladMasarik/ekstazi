@@ -62,7 +62,7 @@ public final class CoverageMethodVisitor extends MethodVisitor {
     private final AtomicInteger mProbeCounter;
     
     /**
-     * Constructor.
+     * Constructor. Calls CoverageMonitor
      */
     public CoverageMethodVisitor(String className, int classProbeId, AtomicInteger probeCounter, int access,
             String methodName, MethodVisitor mv, boolean isNewerThanJava4) {
@@ -78,33 +78,33 @@ public final class CoverageMethodVisitor extends MethodVisitor {
 
     // METHOD VISITOR INTERFACE
 
-    @Override
+    @Override // extra checks before CM.t()
     public void visitLdcInsn(Object cst) {
         // We use this method to support accesses to .class.
         if (cst instanceof Type) {
             int sort = ((Type) cst).getSort();
             if (sort == Type.OBJECT) {
                 String className = Types.descToInternalName(((Type) cst).getDescriptor());
-                insertTInvocation0(className, mProbeCounter.incrementAndGet());
+                insertTInvocation0(className, mProbeCounter.incrementAndGet()); // calls CM.t()
             }
         }
-        mv.visitLdcInsn(cst);
+        mv.visitLdcInsn(cst); // skipp I suppose
     }
 
     @Override
-    public void visitCode() {
+    public void visitCode() { // I suppose it simply calls CM.t()
         if (isNonPrivateStaticMethod() || isNonPrivateInit() || isStaticBlock()) {
-            insertTInvocation0(mClassName, mClassProbeId);
+            insertTInvocation0(mClassName, mClassProbeId); // Adds CoverageMonitor.t() call
         }
         mv.visitCode();
     }
 
-    @Override
+    @Override // call the CM.t() method with special checks
     public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
         if (opcode == Opcodes.INVOKEINTERFACE) {
             // Instrument invocation to interface (to ensure that we collect
             // annotations).
-            insertTInvocation0(owner, mProbeCounter.incrementAndGet());
+            insertTInvocation0(owner, mProbeCounter.incrementAndGet()); // call CM.t()
             mv.visitMethodInsn(opcode, owner, name, desc, itf);
         } else if (owner.equals(Instr.CLASS_CLASS_INTERNAL_NAME)
                 && (!name.equals("forName") && (!name.equals("newInstance")))) {
@@ -114,13 +114,13 @@ public final class CoverageMethodVisitor extends MethodVisitor {
             // non-public methods: forName. Also, we ignore newInstance
             // invocation as constructor is already instrumented, so we want to
             // avoid double coverage monitor invocation.
-            insertReflectionInvocation(name, desc);
+            insertReflectionInvocation(name, desc); // calls something strange / special for reflection
         } else {
-            mv.visitMethodInsn(opcode, owner, name, desc, itf);
+            mv.visitMethodInsn(opcode, owner, name, desc, itf); //basically a "continue"
         }
     }
 
-    @Override
+    @Override // calls CM.t() methods with checks
     public void visitFieldInsn(int opcode, String owner, String name, String desc) {
         // Instrument accesses to static fields. Note that we do not not
         // instrument PUTSTATIC access as we do not have an example where it is
@@ -130,14 +130,14 @@ public final class CoverageMethodVisitor extends MethodVisitor {
             // Collect declaring class.
             if (!Types.isPrimitiveDesc(desc) && !className.equals(mClassName)
                     && !Types.isIgnorableBinName(className)) {
-                insertFInvocation(owner, name, desc);
+                insertFInvocation(owner, name, desc); // calls the CM.t() but in a weired way through f()
             }
             // Collect the owner of the field.
             if (!owner.equals(mClassName)) {
-                insertTInvocation0(owner, mProbeCounter.incrementAndGet());
+                insertTInvocation0(owner, mProbeCounter.incrementAndGet()); // calls the CM.t()
             }
         }
-        mv.visitFieldInsn(opcode, owner, name, desc);
+        mv.visitFieldInsn(opcode, owner, name, desc); // basically a continue
     }
 
     // Reasoning during ICSE14 submission showed that we need not instrument
@@ -183,7 +183,7 @@ public final class CoverageMethodVisitor extends MethodVisitor {
     protected void insertTInvocation(String className, int probeId) {
         mv.visitLdcInsn(Type.getType("L" + className + ";"));
         loadProbeValue(probeId);
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, Names.COVERAGE_MONITOR_VM,
+        mv.visitMethodInsn(Opcodes.INVOKESTATIC, Names.COVERAGE_MONITOR_VM, // seems to call coverageMonitor.t() *touch* method
                 Instr.COVERAGE_MONITOR_MNAME, Instr.CLASS_I_V_DESC, false);
     }
 
@@ -192,7 +192,7 @@ public final class CoverageMethodVisitor extends MethodVisitor {
         // We need different id for field accesses.
         loadProbeValue(mProbeCounter.incrementAndGet());
         mv.visitMethodInsn(Opcodes.INVOKESTATIC, Names.COVERAGE_MONITOR_VM,
-                Instr.COVERAGE_MONITOR_FIELD_MNAME, Instr.OBJECT_I_V_DESC, false);
+                Instr.COVERAGE_MONITOR_FIELD_MNAME, Instr.OBJECT_I_V_DESC, false); // seems to call coverageMonitor.f() *touch* method
     }
 
     protected void insertReflectionInvocation(String name, String desc) {
@@ -207,9 +207,9 @@ public final class CoverageMethodVisitor extends MethodVisitor {
      * @param className
      *            Name of the class to be passed to coverage monitor.
      */
-    private void insertTInvocation0(String className, int probeId) {
+    private void insertTInvocation0(String className, int probeId) { // basically calls CM.t() with checks
         // Check if class name has been seen since the last label.
-        if (!mSeenClasses.add(className)) return;
+        if (!mSeenClasses.add(className)) return; // can continue next break is ready
         // Check if this class name should be ignored.
         if (Types.isIgnorableInternalName(className)) return;
 

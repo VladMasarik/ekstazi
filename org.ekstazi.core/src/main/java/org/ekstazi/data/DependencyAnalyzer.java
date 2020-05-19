@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -82,10 +83,15 @@ public final class DependencyAnalyzer {
 
         this.mUrlExternalForm2Modified = new LRUMap<String, Boolean>(cacheSizes);
         this.mFullTestName2Rerun = new LRUMap<String, Boolean>(cacheSizes);
+        
+        Log.d("DEPEND ANAL INCLUDES");
+        Log.d(Arrays.toString(includes));
+        
+        Thread.dumpStack();
     }
 
-    public synchronized void beginCoverage(String name) {
-        beginCoverage(name, COV_EXT, false);
+    public synchronized void beginCoverage(String name) { // name = DEFAULT
+        beginCoverage(name, COV_EXT, false); 
     }
     
     public synchronized void endCoverage(String name) {
@@ -95,7 +101,7 @@ public final class DependencyAnalyzer {
     public synchronized boolean isAffected(String name) {
         String fullMethodName = name + "." + COV_EXT;
         Set<RegData> regData = mStorer.load(mRootDir, name, COV_EXT);
-        boolean isAffected = isAffected(regData);
+        boolean isAffected = isAffected(regData); // IF hash has changed then start 
         recordTestAffectedOutcome(fullMethodName, isAffected);
         return isAffected;
     }
@@ -108,13 +114,13 @@ public final class DependencyAnalyzer {
      * @param className
      *            Tag used to identify this coverage measure.
      */
-    public synchronized void beginClassCoverage(String className) {
+    public synchronized void beginClassCoverage(String className) { // notes that class was tested and what it hash is; does not save hashes
         if (isOnMustRunList(className)) {
             return;
         }
         // Note that we do not record affected outcome is already recorded
         // when checked if class is affected.
-        beginCoverage(className, CLASS_EXT, false);
+        beginCoverage(className, CLASS_EXT, false); 
     }
 
     /**
@@ -125,7 +131,7 @@ public final class DependencyAnalyzer {
      * @param className
      *            Tag used to identify this coverage measure.
      */
-    public synchronized void endClassCoverage(String className) {
+    public synchronized void endClassCoverage(String className) { // save collected hashes / URLs
         if (isOnMustRunList(className)) {
             return;
         }
@@ -141,7 +147,7 @@ public final class DependencyAnalyzer {
      * 
      * TODO: this method and starting coverage do some duplicate work
      */
-    public synchronized boolean isClassAffected(String className) {
+    public synchronized boolean isClassAffected(String className) { // JUnit started JUnit4Monitor which asked if this class is affected
         if (isOnMustRunList(className)) {
             return true;
         }
@@ -149,7 +155,7 @@ public final class DependencyAnalyzer {
         String fullMethodName = className + "." + CLASS_EXT;
         Set<RegData> regData = mStorer.load(mRootDir, className, CLASS_EXT);
         isAffected = isAffected(regData);
-        recordTestAffectedOutcome(fullMethodName, isAffected);
+        recordTestAffectedOutcome(fullMethodName, isAffected); // Print RUN or SKIP for a class file, into a file 
         return isAffected;
     }
 
@@ -175,20 +181,23 @@ public final class DependencyAnalyzer {
         return className.equals("org.apache.log4j.net.SocketServerTestCase");
     }
 
-    private boolean beginCoverage(String className, String methodName, boolean isRecordAffectedOutcome) {
+    private boolean beginCoverage(String className, String methodName, boolean isRecordAffectedOutcome) { 
+        // basically note that the class was tested and what it hash is; does not save hashes
+        //className = DEFAULT?! || methodName seems to be always = "cov" OR "clz"
         // Fully qualified method name.
         String fullMethodName = className + "." + methodName;
+        Log.d(fullMethodName);
 
         // Clean previously collected coverage.
         CoverageMonitor.clean();
 
         // Check if test is included (note that we do not record info).
-        if (!isIncluded(fullMethodName)) {
+        if (!isIncluded(fullMethodName)) { // returns true if included in mIncludes or mIncludes == null
             return true;
         }
         
         // Check if test should be always run.
-        if (isExcluded(fullMethodName)) {
+        if (isExcluded(fullMethodName)) { // possibly often skip
             if (isRecordAffectedOutcome) {
                 recordTestAffectedOutcome(fullMethodName, true);
             }
@@ -200,22 +209,30 @@ public final class DependencyAnalyzer {
         // present in some projects: as part of a test suite and separate).
         // We force the execution as the execution may differ and we union
         // the coverage (load the old one and new one will be appended).
-        if (mFullTestName2Rerun.containsKey(fullMethodName)) {
+        if (mFullTestName2Rerun.containsKey(fullMethodName)) { // possibly often skip
             Set<RegData> regData = mStorer.load(mRootDir, className, methodName);
+            Log.d("REGDATA FOR PARAM CLASS");
+            Log.d(regData);
             CoverageMonitor.addURLs(extractExternalForms(regData));
             return mFullTestName2Rerun.get(fullMethodName);
         }
 
+
+        // Compare previous hashes of the class file, if same don't do anything.
         Set<RegData> regData = mStorer.load(mRootDir, className, methodName);
-        boolean isAffected = isAffected(regData);
+        boolean isAffected = isAffected(regData); // true if hash from previous test has changed
+
+        Log.d("REGDATA USUAL");
+        Log.d(regData);
         if (isRecordAffectedOutcome) {
-            recordTestAffectedOutcome(fullMethodName, isAffected);
+            recordTestAffectedOutcome(fullMethodName, isAffected); // Print RUN or SKIP for a class, into a file 
         }
 
         // If in append mode add urls; we used this append mode when we noticed that
         // some runs give non-deterministic coverage, so we wanted to run the same
         // test several times and do union of coverage.
         if (mDependenciesAppend) {
+            Log.d("***********APPEND DEPENDENCIES IS TRUE!!!! **********");
             CoverageMonitor.addURLs(extractExternalForms(regData));
             // Force run
             isAffected = true;
@@ -266,8 +283,10 @@ public final class DependencyAnalyzer {
         }
         return externalForms;
     }
-    
-    private void endCoverage(String className, String methodName) {
+    // basically creates hasshes from the collected URLs and saves them
+    private void endCoverage(String className, String methodName) { // code method
+        Log.d("ENDING COVERAGE; MONITOR URLs");
+        Log.d(Arrays.toString(CoverageMonitor.getURLs()));
         Map<String, String> hashes = mHasher.hashExternalForms(CoverageMonitor.getURLs());
         Set<RegData> regData = new TreeSet<RegData>(new RegData.RegComparator());
         for (Entry<String, String> entry : hashes.entrySet()) {
@@ -317,6 +336,11 @@ public final class DependencyAnalyzer {
         return modified;
     }
 
+    /**
+     * Print RUN or SKIP for a class file, into a file 
+     * @param fullMethodName
+     * @param isAffected
+     */
     @Research
     private void recordTestAffectedOutcome(String fullMethodName, boolean isAffected) {
         if (!Config.X_LOG_RUNS_V) {

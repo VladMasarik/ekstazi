@@ -34,7 +34,7 @@ public class JUnit3TestSuite implements Test {
         return mTestSuite != null ? mTestSuite.countTestCases() : 0;
     }
 
-    public void run(TestResult result) {
+    public void run(TestResult result) { // called by JUNIT plugin
         if (Ekstazi.inst().isClassAffected(mTestClass.getName())) {
             JUnit3OutcomeListener outcomeListener = new JUnit3OutcomeListener();
             result.addListener(outcomeListener);
@@ -43,7 +43,7 @@ public class JUnit3TestSuite implements Test {
                 mTestSuite = new TestSuite(mTestClass);
                 mTestSuite.run(result);
             } finally {
-                Ekstazi.inst().endClassCoverage(mTestClass.getName(), outcomeListener.isFailOrError());
+                Ekstazi.inst().endClassCoverage(mTestClass.getName(), outcomeListener.isFailOrError()); // saves collected hashes / URLs
             }
         }
     }

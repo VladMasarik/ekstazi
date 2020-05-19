@@ -22,7 +22,7 @@ import org.ekstazi.instrument.LoaderMethodVisitor;
  * Supporting runtime monitor to always return Tool classes loaded by
  * SystemClassLoader. Also see {@link LoaderMethodVisitor}.
  */
-public class LoaderMonitor {
+public class LoaderMonitor { // useless something for classloader / loading classes
 
     /**
      * Loads the class with the specified binary name using system class loader.

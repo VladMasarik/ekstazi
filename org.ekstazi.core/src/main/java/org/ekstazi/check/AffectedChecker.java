@@ -215,7 +215,7 @@ public class AffectedChecker {
 
     private static List<File> getSortedFiles(File coverageDir) {
         List<File> sortedFiles = new ArrayList<File>();
-        File[] files = coverageDir.listFiles(new FilenameFilter() {
+        File[] files = coverageDir.listFiles(new FilenameFilter() { // Files without tool files
             public boolean accept(File dir, String name) {
                 // Exclude tool files.
                 return (!name.contains(Names.VERBOSE_FILE_NAME) && !name.contains(Names.RUN_INFO_FILE_NAME));
@@ -296,7 +296,7 @@ public class AffectedChecker {
                 continue;
             }
             if (fileName.endsWith(DependencyAnalyzer.COV_EXT)) {
-                className = covCheck.includeAll(fileName, dirName);
+                className = covCheck.includeAll(fileName, dirName); // DECIDES whether classes are affected
             } else if (fileName.endsWith(DependencyAnalyzer.CLASS_EXT)) {
                 className = classCheck.includeAll(fileName, dirName);
             } else {

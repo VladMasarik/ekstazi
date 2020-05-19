@@ -38,6 +38,7 @@ import org.ekstazi.util.FileUtil;
 public class RestoreEkstaziMojo extends AbstractEkstaziMojo {
 
     public void execute() throws MojoExecutionException {
+        Thread.dumpStack();
         if (getSkipme()) {
             getLog().info("Ekstazi is skipped.");
             return;

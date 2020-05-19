@@ -16,7 +16,7 @@
 
 package org.ekstazi.monitor;
 
-public class SystemMonitor {
+public class SystemMonitor { // useless just cleans
 
     public static void runFinalization() {
         // Clean cache to make sure that we do not keep references to classes.

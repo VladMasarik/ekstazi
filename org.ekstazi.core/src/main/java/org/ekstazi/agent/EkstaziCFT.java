@@ -27,6 +27,7 @@ import org.ekstazi.Names;
 import org.ekstazi.asm.ClassReader;
 import org.ekstazi.asm.ClassWriter;
 import org.ekstazi.instrument.CoverageClassVisitor;
+import org.ekstazi.log.Log;
 import org.ekstazi.research.Research;
 import org.ekstazi.util.FileUtil;
 import org.ekstazi.util.LRUMap;
@@ -69,12 +70,15 @@ public final class EkstaziCFT implements ClassFileTransformer {
         this.mCacheRedefinedClasses = Collections.newSetFromMap(new LRUMap<String, Boolean>(1000));
         this.mIsSaveInstrumentedHash = Config.X_SAVE_INSTRUMENTED_CODE_V;
         this.mClassesInclude = Config.DEPENDENCIES_CLASSES_INSTRUMENT_V;
+        Log.d(mCacheRedefinedClasses, mIsSaveInstrumentedHash, mClassesInclude);
     }
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
             ProtectionDomain protectionDomain, byte[] classfileBuffer) {
 
+        // Log.d("CFT Transform method");
+        
         // Ensure that monitor is accessible from the ClassLoader.
         if (!isMonitorAccessibleFromClassLoader(loader)) {
             return null;
@@ -86,6 +90,8 @@ public final class EkstaziCFT implements ClassFileTransformer {
         }
 
         if (className.contains("$Proxy") || Types.isIgnorableInternalName(className)) {
+            System.err.println("transform class ignored; class:");
+            System.err.println(className);
             return null;
         }
 
@@ -104,7 +110,10 @@ public final class EkstaziCFT implements ClassFileTransformer {
         }
 
         // Instrument class.
-        classfileBuffer = instrumentClass(loader, className, isBeingRedefined, storageResult, classfileBuffer);
+        classfileBuffer = instrumentClass(loader, className, isBeingRedefined, storageResult, classfileBuffer); // coverageClassVisitor
+
+        System.err.println("ekstazi transform; class:");
+        System.err.println(className);
 
         // Line for debugging.
         // saveClassfileBufferForDebugging(className, classfileBuffer);
@@ -338,6 +347,7 @@ public final class EkstaziCFT implements ClassFileTransformer {
     // MAIN
 
     public static void main(String[] args) throws IOException {
+        Log.d("CFT MAIN method");
         if (args.length != 2) {
             System.err.println("Expecting mode(--file/--jar) and path to the file");
         }

@@ -16,6 +16,7 @@
 
 package org.ekstazi.it;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.ekstazi.it.util.EkstaziPaths;
@@ -25,6 +26,7 @@ import org.ekstazi.it.util.EkstaziPaths;
  */
 public class EndToEndScalaTestIT extends AbstractScalaTestIT {
 
+    @Ignore
     @Test
     public void test() throws Exception {
         String testName = "scalatest-endtoend";

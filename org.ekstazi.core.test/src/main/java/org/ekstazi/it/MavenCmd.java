@@ -29,6 +29,7 @@ public class MavenCmd extends AbstractCmd {
         CLEAN("clean"),
         EKSTAZIEKSTAZI("ekstazi:ekstazi"),
         EKSTAZIPREDICT("ekstazi:predict"),
+        EXCLEAN("ekstazi:clean"),
         TEST("test"),
         TESTCOMPILE("test-compile"),
         VERIFY("verify");

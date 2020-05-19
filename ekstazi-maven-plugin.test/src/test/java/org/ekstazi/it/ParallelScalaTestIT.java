@@ -16,12 +16,14 @@
 
 package org.ekstazi.it;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.ekstazi.it.util.EkstaziPaths;
 
 public class ParallelScalaTestIT extends AbstractScalaTestIT {
 
+    @Ignore
     @Test
     public void test() throws Exception {
         String testName = "scalatest-parallel";

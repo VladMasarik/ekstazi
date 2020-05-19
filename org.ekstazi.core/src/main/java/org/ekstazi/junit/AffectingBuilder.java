@@ -30,14 +30,14 @@ import org.junit.runners.model.RunnerBuilder;
  */
 public class AffectingBuilder extends RunnerBuilder {
     @Override
-    public Runner runnerForClass(Class<?> testClass) {
+    public Runner runnerForClass(Class<?> testClass) { // return affected class saying if to test AND print RUN / SKIP into a class file
         // We check the following conditions:
         // 1. It is either TestCase subclass (JUnit3) or class without list of
         // other test classes (JUnit4), and 2. It is not affected with the
         // changes since the last run.
         if ((TestCase.class.isAssignableFrom(testClass) ||
                 !testClass.isAnnotationPresent(SuiteClasses.class)) &&
-                !Ekstazi.inst().isClassAffected(testClass.getName())) {
+                !Ekstazi.inst().isClassAffected(testClass.getName())) {  // return if the class should be tested, and print RUN / SKIP into a class file
             return new AffectingRunner(testClass);
         } else {
             return null;

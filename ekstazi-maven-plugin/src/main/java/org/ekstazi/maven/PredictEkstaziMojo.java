@@ -36,6 +36,7 @@ public class PredictEkstaziMojo extends StaticSelectEkstaziMojo {
     private static final String NON_AFFECTED_PREFIX = "NonAffected::";
 
     public void execute() throws MojoExecutionException {
+        Thread.dumpStack();
         // Prepare initial list of options and set property.
         System.setProperty(AbstractMojoInterceptor.ARGLINE_INTERNAL_PROP, prepareEkstaziOptions());
         // Find non affected classes and print.

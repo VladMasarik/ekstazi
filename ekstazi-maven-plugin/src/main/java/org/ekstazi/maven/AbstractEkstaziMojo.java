@@ -145,6 +145,13 @@ public abstract class AbstractEkstaziMojo extends AbstractMojo {
         if (ekstaziPlugin == null) {
             return false;
         }
+
+        for (Object execution : ekstaziPlugin.getExecutions()) {
+            for (Object goal : ((PluginExecution) execution).getGoals()) {
+                System.err.println(String.format("GOAL = %s", (String)goal));
+            }
+        }
+
         for (Object execution : ekstaziPlugin.getExecutions()) {
             for (Object goal : ((PluginExecution) execution).getGoals()) {
                 if (((String) goal).equals("restore")) {

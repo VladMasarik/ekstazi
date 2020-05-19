@@ -52,7 +52,7 @@ public final class MavenCFT implements ClassFileTransformer {
         @Override
         public void visitCode() {
             mv.visitVarInsn(Opcodes.ALOAD, 0);
-            mv.visitMethodInsn(Opcodes.INVOKESTATIC, mInterceptorName, mMethodName,
+            mv.visitMethodInsn(Opcodes.INVOKESTATIC, mInterceptorName, mMethodName, //surefire interceptor; execute
                     mMethodDesc.replace("(", "(Ljava/lang/Object;"), false);
             mv.visitCode();
         }
@@ -86,6 +86,12 @@ public final class MavenCFT implements ClassFileTransformer {
 
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
             ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+        
+        if (className.contains("bench")) {
+            System.err.println("class Names:");
+            System.err.println(className);
+            System.err.println("##############################");
+        }
         if (className.equals(MavenNames.ABSTRACT_SUREFIRE_MOJO_VM)
                 || className.equals(MavenNames.SUREFIRE_PLUGIN_VM)
                 || className.equals(MavenNames.FAILSAFE_PLUGIN_VM)) {
@@ -104,7 +110,7 @@ public final class MavenCFT implements ClassFileTransformer {
         ClassReader classReader = new ClassReader(classfileBuffer);
         ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
         ClassVisitor visitor = new MavenClassVisitor(className, interceptorName, classWriter);
-        classReader.accept(visitor, 0);
-        return classWriter.toByteArray();
+        classReader.accept(visitor, 0); // reads the chosen class line by line, and searches for some method
+        return classWriter.toByteArray(); // Basically returns the class read by reader and each thing in visitor was changed and written by the writer and returned as the transform
     }
 }

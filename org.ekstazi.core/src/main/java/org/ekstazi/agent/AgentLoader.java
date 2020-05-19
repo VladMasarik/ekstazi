@@ -91,7 +91,7 @@ public final class AgentLoader {
             // -Djvm.options=jdk.attach.allowAttachSelf=true is set.
             vmClass = ClassLoader.getSystemClassLoader().loadClass("com.sun.tools.attach.VirtualMachine");
         } else {
-            vmClass = loadVirtualMachine(toolsJarFile);
+            vmClass = loadVirtualMachine(toolsJarFile); // For some reason a classLoader is used to lead a VM class using a toolsJar
         }
 
         if (vmClass == null) {
@@ -117,7 +117,7 @@ public final class AgentLoader {
         String pid = getPID();
         String agentAbsolutePath = new File(agentJarURL.toURI().getSchemeSpecificPart()).getAbsolutePath();
 
-        Object vm = getAttachMethod(vmClass).invoke(null, new Object[] { pid });
+        Object vm = getAttachMethod(vmClass).invoke(null, new Object[] { pid }); // Finished here.. dont know what it does after...
         getLoadAgentMethod(vmClass).invoke(vm, new Object[] { agentAbsolutePath });
         getDetachMethod(vmClass).invoke(vm);
     }

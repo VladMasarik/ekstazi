@@ -111,7 +111,7 @@ public final class Config {
     }
     
     @Opt(desc = "Mode")
-    public static AgentMode MODE_V = AgentMode.NONE;
+    public static AgentMode MODE_V = AgentMode.SINGLEFORK; // Default .NONE
     protected static final String MODE_N = "mode";
 
     @Opt(desc = "Single mode output name")
@@ -199,13 +199,15 @@ public final class Config {
     }
 
     @Opt(desc = "Debug mode")
-    public static DebugMode DEBUG_MODE_V = DebugMode.NONE;
+    public static DebugMode DEBUG_MODE_V = DebugMode.SCREEN; //DEFAULT value was NONE
     protected static String DEBUG_MODE_N = "debug.mode";
 
     @Opt(desc = "Enable/disable debug mode.")
-    public static boolean DEBUG_V = false;
+    public static boolean DEBUG_V = true;
     protected static final String DEBUG_N = "debug";
 
+    // NO IDEA WHAT this does, but it is used in dependency analyzer and if true it skips a large portion of code
+    // however, quite probably it is only that the logging output is ignored and not written into a file
     public static boolean X_LOG_RUNS_V = false;
     protected static final String X_LOG_RUNS_N = "x.log.runs";
 
@@ -260,20 +262,30 @@ public final class Config {
     public static void loadConfig(String options, boolean force) {
         if (sIsInitialized && !force) return;
         sIsInitialized = true;
-
+        
         Properties commandProperties = unpackOptions(options);
+
         String userHome = getUserHome();
         File userHomeDir = new File(userHome, Names.EKSTAZI_CONFIG_FILE);
         Properties homeProperties = getProperties(userHomeDir);
+
         File userDir = new File(System.getProperty("user.dir"), Names.EKSTAZI_CONFIG_FILE);
         Properties userProperties = getProperties(userDir);
+
         loadProperties(homeProperties);
         loadProperties(userProperties);
         loadProperties(commandProperties);
         // Init Log before any print of config/debug.
         Log.init(DEBUG_MODE_V == DebugMode.SCREEN || DEBUG_MODE_V == DebugMode.EVERYWHERE,
-                DEBUG_MODE_V == DebugMode.FILE || DEBUG_MODE_V == DebugMode.EVERYWHERE,
-                createFileNameInCoverageDir("debug.log"));
+        DEBUG_MODE_V == DebugMode.FILE || DEBUG_MODE_V == DebugMode.EVERYWHERE,
+        createFileNameInCoverageDir("debug.log"));
+        
+        System.err.println("Load CONFIG OPTIONS");
+        Log.d("options = ",options);
+        Log.d("HOME = ",homeProperties);
+        Log.d("USer = ",userProperties);
+        Log.d("Command = ",commandProperties);
+
 
         // Print configuration.
         printVerbose(userHomeDir, userDir);

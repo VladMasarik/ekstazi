@@ -22,6 +22,7 @@ import java.net.InetAddress;
 import java.security.Permission;
 import java.util.regex.Pattern;
 
+import org.ekstazi.log.Log;
 import org.ekstazi.monitor.CoverageMonitor;
 import org.ekstazi.research.Research;
 
@@ -75,6 +76,7 @@ public class FileRecorder extends SecurityManager {
     }
 
     private void recordFile(String file) {
+        Log.d("RECORD FILE METHOD");
         String aFile = isAbsolutePath(file) ? file : mCwd + "/" + file;
         if (isRelevant(aFile)) {
             if (!isOnStack(3, MY_NAME)) {

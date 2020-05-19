@@ -28,6 +28,7 @@ import org.ekstazi.Names;
 import org.ekstazi.data.DependencyAnalyzer;
 import org.ekstazi.io.FileRecorder;
 import org.ekstazi.junit.JUnitCFT;
+import org.ekstazi.log.Log;
 import org.ekstazi.maven.MavenCFT;
 import org.ekstazi.monitor.CoverageMonitor;
 
@@ -52,6 +53,8 @@ public class EkstaziAgent {
      *            Instrumentation instance.
      */
     public static void premain(String options, Instrumentation instrumentation) {
+        System.err.println("PREMAIN DUMP STACK");
+        Thread.dumpStack();
         // Load options.
         Config.loadConfig(options, false);
 
@@ -64,23 +67,30 @@ public class EkstaziAgent {
 
     private static void initializeMode(Instrumentation instrumentation) {
         init(instrumentation);
-        if (Config.MODE_V == Config.AgentMode.MULTI) {
+        Log.d("InitializeMode method");
+        
+        if (Config.MODE_V == Config.AgentMode.MULTI) { // mode=multi does SIGNLEFORK?! keeps doing tests all the time
             // NOTE: Alternative is to set the transformer in main Tool class to
             // initialize Config.
             instrumentation.addTransformer(new EkstaziCFT(), true);
             initMultiCoverageMode(instrumentation);
         } else if (Config.MODE_V == Config.AgentMode.SINGLE) {
+            // ekstazi:clean test works, but running without clean crashes the VM
+
+//             [ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:2.16:test (default-test) on project commons-net: Execution default-test of goal org.apache.maven.plugins:maven-surefire-plugin:2.16:test failed: The forked VM terminated without saying properly goodbye. VM crash or System.exit called ?
+// [ERROR] Command was/bin/sh -c cd /home/vmasarik/git/net/trunk && /usr/lib/jvm/java-1.8.0-openjdk-1.8.0.242.b08-0.fc31.x86_64/jre/bin/java -javaagent:/home/vmasarik/.m2/repository/org/ekstazi/org.ekstazi.core/5.4.0/org.ekstazi.core-5.4.0.jar=mode=JUNIT,force.all=false,force.failing=false,root.dir=file:/home/vmasarik/git/net/trunk/.ekstazi/,mode=single -jar /home/vmasarik/git/net/trunk/target/surefire/surefirebooter2040813414471841199.jar /home/vmasarik/git/net/trunk/target/surefire/surefire2561932882550172243tmp /home/vmasarik/git/net/trunk/target/surefire/surefire_05384608851766806748tmp
+
             if (initSingleCoverageMode(Config.SINGLE_NAME_V, instrumentation)) {
                 instrumentation.addTransformer(new EkstaziCFT(), true);
             }
-        } else if (Config.MODE_V == Config.AgentMode.SINGLEFORK) {
+        } else if (Config.MODE_V == Config.AgentMode.SINGLEFORK) { // seems to be same case as with SINGLE mode
             if (initSingleCoverageMode(Config.SINGLE_NAME_V, instrumentation)) {
                 instrumentation.addTransformer(new CollectLoadedCFT(), false);
             }
         } else if (Config.MODE_V == Config.AgentMode.JUNIT) {
-            instrumentation.addTransformer(new EkstaziCFT(), true);
-            initJUnitMode(instrumentation);
-        } else if (Config.MODE_V == Config.AgentMode.JUNITFORK) {
+            instrumentation.addTransformer(new EkstaziCFT(), true); // Ekstazi CFT
+            initJUnitMode(instrumentation);                         // JUnitCFT
+        } else if (Config.MODE_V == Config.AgentMode.JUNITFORK) { //seems to work but produces LOTS of text with ekstazi:clean test
             initJUnitForkMode(instrumentation);
         } else if (Config.MODE_V == Config.AgentMode.SCALATEST) {
             initScalaTestMode(instrumentation);
@@ -89,6 +99,8 @@ public class EkstaziAgent {
             System.exit(1);
         }
         Ekstazi.inst();
+        Thread.dumpStack();
+        Log.d("Finished initialization method");
     }
 
     /**
@@ -97,11 +109,13 @@ public class EkstaziAgent {
      * @param options
      * @param instrumentation
      */
-    public static void agentmain(String options, Instrumentation instrumentation) {
+    public static void agentmain(String options, Instrumentation instrumentation) {  // https://docs.oracle.com/javase/7/docs/api/java/lang/instrument/Instrumentation.html
+    // basically saying that 'premain is called when agent is loaded immediatelly; and agentmain when after some time'
+        Log.d("agentMain method");
         if (Config.X_ENABLED_V) {
-            init(instrumentation);
+            init(instrumentation); // nothing much
             instrumentation.addTransformer(new MavenCFT(), true);
-            instrumentMaven(instrumentation);
+            instrumentMaven(instrumentation); // tranform already loaded surefire plugin
         }
     }
 
@@ -118,18 +132,27 @@ public class EkstaziAgent {
      *
      * This code should be in another class/place.
      */
-    private static void instrumentMaven(Instrumentation instrumentation) {
+    private static void instrumentMaven(Instrumentation instrumentation) { // tranform already loaded surefire plugin
+        System.err.println();
         try {
             for (Class<?> clz : instrumentation.getAllLoadedClasses()) {
                 String name = clz.getName();
+                if (name.contains("bench")) {
+                    System.err.println("instrumentMaven class names");
+                    System.err.println("##############################");
+                    System.err.println(name);
+                }
                 if (name.equals(Names.ABSTRACT_SUREFIRE_MOJO_CLASS_VM)
                         || name.equals(Names.SUREFIRE_PLUGIN_VM)
                         || name.equals(Names.FAILSAFE_PLUGIN_VM)
                         || name.equals(Names.TESTMOJO_VM)) {
-                    instrumentation.retransformClasses(clz);
+                    System.out.println();
+                    instrumentation.retransformClasses(clz); // basically classes are already loaded, but we can still chagge them
                 }
             }
         } catch (UnmodifiableClassException ex) {
+            
+            System.out.println();
             // Consider something better than doing nothing.
         }
     }
@@ -168,10 +191,12 @@ public class EkstaziAgent {
      * only in that case start coverage, otherwise we remove bodies of all main
      * methods to avoid any execution.
      */
-    private static boolean initSingleCoverageMode(final String runName, Instrumentation instrumentation) {
+    private static boolean initSingleCoverageMode(final String runName, Instrumentation instrumentation) { //quite possibly never called since it has to be either SINGLEFORK or SINGLE mode
         // Check if run is affected and if not start coverage.
         if (Ekstazi.inst().checkIfAffected(runName)) {
-            Ekstazi.inst().startCollectingDependencies(runName);
+            System.out.println("Single coverage mode RunName:");
+            System.out.println(runName);
+            Ekstazi.inst().startCollectingDependencies(runName); // runName = DEFAULT
             // End coverage when VM ends execution.
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override

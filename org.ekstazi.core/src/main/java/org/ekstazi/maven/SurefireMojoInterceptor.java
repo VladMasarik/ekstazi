@@ -53,6 +53,7 @@ public final class SurefireMojoInterceptor extends AbstractMojoInterceptor {
      *             Always MojoExecutionException.
      */
     public static void execute(Object mojo) throws Exception {
+        Thread.dumpStack();
         // Note that the object can be an instance of
         // AbstractSurefireMojo.
         if (!(isSurefirePlugin(mojo) || isFailsafePlugin(mojo))) {
@@ -72,9 +73,9 @@ public final class SurefireMojoInterceptor extends AbstractMojoInterceptor {
 
         try {
             // Update argLine.
-            updateArgLine(mojo);
+            updateArgLine(mojo); // seems to not do much
             // Update excludes.
-            updateExcludes(mojo);
+            updateExcludes(mojo); // check again but does not seem to do much
             // Update parallel.
             updateParallel(mojo);
         } catch (Exception ex) {
@@ -132,6 +133,7 @@ public final class SurefireMojoInterceptor extends AbstractMojoInterceptor {
         String forkCount = null;
         try {
             forkCount = invokeAndGetString(GET_FORK_COUNT, mojo);
+            System.err.println("FORK COUNT = " + forkCount);
         } catch (NoSuchMethodException ex) {
             // Nothing: earlier versions (before 2.14) of surefire did
             // not have forkCount.
@@ -155,13 +157,13 @@ public final class SurefireMojoInterceptor extends AbstractMojoInterceptor {
         Config.AgentMode junitMode = isOneVMPerClass(mojo) ? Config.AgentMode.JUNITFORK : Config.AgentMode.JUNIT;
         String currentArgLine = (String) getField(ARGLINE_FIELD, mojo);
         String newArgLine = makeArgLine(mojo, junitMode, currentArgLine);
-        setField(ARGLINE_FIELD, mojo, newArgLine);
+        setField(ARGLINE_FIELD, mojo,  newArgLine); //  "-verbose:class -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005 " +  
     }
     
     private static void updateExcludes(Object mojo) throws Exception {
         // Get excludes set by the user (in pom.xml in Surefire).
         List<String> currentExcludes = getListField(EXCLUDES_FIELD, mojo);
-        List<String> ekstaziExcludes = new ArrayList<String>(Arrays.asList(System.getProperty(EXCLUDES_INTERNAL_PROP)
+        List<String> ekstaziExcludes = new ArrayList<String>(Arrays.asList(System.getProperty(EXCLUDES_INTERNAL_PROP) //  classes that should not be executed; these are also the classes whose hashes did not change since last
                 .replace("[", "").replace("]", "").split(",")));
         List<String> newExcludes = ekstaziExcludes;
         if (currentExcludes != null) {

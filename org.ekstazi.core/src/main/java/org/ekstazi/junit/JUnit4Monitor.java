@@ -29,7 +29,7 @@ public class JUnit4Monitor {
      * ThreadLocal eventually. */
     private static int recursiveDepth  = 0;
 
-    public static Runner runnerForClass(RunnerBuilder builder, Class<?> testClass) throws Throwable {
+    public static Runner runnerForClass(RunnerBuilder builder, Class<?> testClass) throws Throwable { // called by JUnit WHEN asking whether a test is affected; if it is this gets called and wants to return some runner
         // Support for Suite.class.  We want to ignore it, as we want
         // to run classes that are in the Suite and not Suite itself.
         RunWith anno = testClass.getAnnotation(RunWith.class);
@@ -38,14 +38,14 @@ public class JUnit4Monitor {
         }
         try {
             recursiveDepth++;
-            return runnerForClass0(builder, testClass);
+            return runnerForClass0(builder, testClass); // returns coverage runner which seems to get called right after to collect Dependencies and run the test
         } finally {
             recursiveDepth--;
         }
     }
     
     /**
-     * JUnit4 support.
+     * JUnit4 support. // returns coverage runner which seems to get called right after to collect Dependencies and run the test Class
      */
     public static Runner runnerForClass0(RunnerBuilder builder, Class<?> testClass) throws Throwable {
         if (recursiveDepth > 1 ||
@@ -53,13 +53,13 @@ public class JUnit4Monitor {
             return builder.runnerForClass(testClass);
         }
         AffectingBuilder affectingBuilder = new AffectingBuilder();
-        Runner runner = affectingBuilder.runnerForClass(testClass);
+        Runner runner = affectingBuilder.runnerForClass(testClass); // return affected class saying if to test or not AND print RUN / SKIP into a class file
         if (runner != null) {
             return runner;
         }
         CoverageMonitor.clean();
         Runner wrapped = builder.runnerForClass(testClass);
-        return new CoverageRunner(testClass, wrapped, CoverageMonitor.getURLs());
+        return new CoverageRunner(testClass, wrapped, CoverageMonitor.getURLs()); // the test runner which start collecting dependencies
     }
     
     /**
