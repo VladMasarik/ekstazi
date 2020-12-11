@@ -19,14 +19,12 @@ package org.ekstazi;
 import java.io.File;
 import java.io.IOException;
 import java.lang.instrument.Instrumentation;
-import java.lang.instrument.UnmodifiableClassException;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.ekstazi.agent.EkstaziAgent;
 import org.ekstazi.data.DependencyAnalyzer;
 import org.ekstazi.dynamic.DynamicEkstazi;
 import org.ekstazi.log.Log;
-import org.ekstazi.monitor.CoverageMonitor;
 import org.ekstazi.research.Research;
 
 /**
@@ -76,7 +74,6 @@ public final class Ekstazi {
      * and initialize the instance if it was not previously constructed.
      */
     public static Ekstazi inst() {
-        if (inst != null) return inst;
         Log.d("CREATING NEW EKSTAZI INSTANCE");
         Thread.dumpStack();
         synchronized (Ekstazi.class) {
@@ -89,27 +86,50 @@ public final class Ekstazi {
 
     // RUNTIME ACCESS
 
+    /**
+     * Checks if class was analyzed
+     * @param name name of the class
+     * 
+     * @return Whether class was analyzed
+     */
     public boolean checkIfAffected(String name) {
         Log.d("Checking if affected:", name);
         return mIsEnabled ? mDependencyAnalyzer.isAffected(name) : true;
     }
 
+    /**
+     * Initiates dependency collection on a class
+     * 
+     * @param name class name
+     */
     public void startCollectingDependencies(String name) { // name = DEFAULT
         Log.d("Begin collecting dependencies of METHOD: ", name);
-        Log.d("IN IFFFFFF @@@@@@@@@@@@@@@");
         if (mIsEnabled) {
-            Log.d("IN IFFFFFF $$$$$$$$$$");
             mDependencyAnalyzer.beginCoverage(name);
         }
     }
     
+    /**
+     * End the dependency collection of a class.
+     * @param name Class name
+     */
     public void finishCollectingDependencies(String name) {
-        Log.d("Finish collecting dependencies: ", name);
-        if (mIsEnabled) {
-            mDependencyAnalyzer.endCoverage(name);
+        if (StringUtils.isNotEmpty(name)) {
+            Log.d("Finish collecting dependencies: ", name);
+            if (mIsEnabled) {
+                mDependencyAnalyzer.endCoverage(name);
+            }            
+        } else {
+            Log.i("Input name is empty or null.");
         }
     }
 
+    /**
+     * Checks if class was analyzed, but only if the dependecny collection did not fail.
+     * @param className Class name that is being checked.
+     * 
+     * @return Whether the class was analyzed
+     */
     public boolean isClassAffected(String className) { // return if the class should be tested, and print RUN / SKIP into a class file
         Log.d("Checking if class affected:", className);
         // Check if failing tests should be run or all tests are forced.
@@ -119,32 +139,37 @@ public final class Ekstazi {
         return mIsEnabled ? mDependencyAnalyzer.isClassAffected(className) : true;
     }
 
+    /**
+     * Initiates dependency collection on a class
+     * @param className Class name
+     */
     public void beginClassCoverage(String className) { // notes that class was tested and what it hash is; does not save hashes
-        beginClassCoverage(className, true);
-    }
-
-    public void beginClassCoverage(String className, boolean checkGranularity) { // notes that class was tested and what it hash is; does not save hashes
         Log.d("Begin measuring coverage: ", className); // FINISHED HERE!!!
         if (mIsEnabled) {
             mDependencyAnalyzer.beginClassCoverage(className);
         }
     }
     
-    private void endClassCoverage(String className) { // save collected hashes / URLs
-        Log.d("End measuring coverage: " + className);
-        if (mIsEnabled) {
-            mDependencyAnalyzer.endClassCoverage(className);
-        }
-    }
-
+    /**
+     * Checks whether the dependency analysis failed at least once.
+     * @param className Class name of the analyzed class
+     * 
+     * @return Whether the analysis failed at least once.
+     */
     private boolean wasFailing(String className) {
-        File testResultsDir = new File(Config.ROOT_DIR_V, Names.TEST_RESULTS_DIR_NAME);
-        File outcomeFile = new File(testResultsDir, className);
-        return outcomeFile.exists();
+        if (StringUtils.isNotEmpty(className)) {  
+            File testResultsDir = new File(Config.ROOT_DIR_V, Names.TEST_RESULTS_DIR_NAME);
+            File outcomeFile = new File(testResultsDir, className);
+            return outcomeFile.exists();
+        }
+        return false;
     }
     
     /**
      * Saves info about the results of running the given test class.
+     * 
+     * @param className name of the class that is being covered
+     * @param isFailOrError whether a fail or an error occured during the class coverage phase
      */
     public void endClassCoverage(String className, boolean isFailOrError) { // just wrapper around DepAnal.endClass
         // which just saves the collected hashes / URLs
@@ -161,10 +186,13 @@ public final class Ekstazi {
         } else {
             outcomeFile.delete();
         }
-        endClassCoverage(className);
+        
+        Log.d("End measuring coverage: " + className);
+        if (mIsEnabled) {
+            mDependencyAnalyzer.endClassCoverage(className);
+        }
     }
 
-    // INTERNAL
 
     /**
      * Initializes this facade. This method should be invoked only once.
@@ -176,12 +204,10 @@ public final class Ekstazi {
      * @return true if Tool is enabled, false otherwise.
      */
     private boolean initAndReportSuccess() {
-        // Load configuration.
         Config.loadConfig();
         // Initialize storer, hashes, and analyzer.
         mDependencyAnalyzer = Config.createDepenencyAnalyzer();
 
-        // Establish if Tool is enabled.
         boolean isEnabled = establishIfEnabled();
         // Return if not enabled or code should not be instrumented.
         if (!isEnabled || !Config.X_INSTRUMENT_CODE_V || isEkstaziSystemClassLoader()) {
@@ -190,33 +216,39 @@ public final class Ekstazi {
 
         // Set the agent at runtime if not already set.
         Instrumentation instrumentation = EkstaziAgent.getInstrumentation();
-        if (instrumentation == null) { // hopefully never happens because I have no idea what it does
+        if (instrumentation == null) {
             Log.d("Agent has not been set previously");
             instrumentation = DynamicEkstazi.initAgentAtRuntimeAndReportSuccess();
             if (instrumentation == null) {
                 Log.d("No Instrumentation object found; enabling Ekstazi without using any instrumentation");
                 return true;
             }
-        } else {
-            Log.d("Agent has been set previously");
         }
+        Log.d("Agent has been set.");
 
         return true;
     }
 
     /**
-     * Returns true if current system class loader is {@link EkstaziClassLoader}.
+     * Checks whether the currect class loader is set to {@link EkstaziClassLoader}.
+     * 
+     * @return true if current system class loader is {@link EkstaziClassLoader}.
      */
     @Research
     private boolean isEkstaziSystemClassLoader() {
         ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
-        return systemClassLoader != null ? systemClassLoader.getClass().getName()
-                .equals(Names.EKSTAZI_CLASSLOADER_BIN) : false;
+        if (systemClassLoader == null) {
+            return false;
+        }
+        String classLoaderName = systemClassLoader.getClass().getName();
+        return classLoaderName.equals(Names.EKSTAZI_CLASSLOADER_BIN);
     }
 
     /**
      * Checks all conditions that define if Tool is enabled or not. Tool is
      * enabled if appropriate flag is set in configuration.
+     * 
+     * @return whether the Tool is enabled.
      */
     private static boolean establishIfEnabled() {
         return Config.X_ENABLED_V;
